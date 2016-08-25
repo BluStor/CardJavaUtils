@@ -48,6 +48,7 @@ import asg.cliche.Param;
 import asg.cliche.ShellFactory;
 
 public class SerialComm {
+	final static String COM_PORT = "COM74";
 	
 	private BlockingQueue<Byte>[] mChannelBuffers = new LinkedBlockingQueue[MAX_CHANNEL_NUMBER + 1];
 	
@@ -69,7 +70,9 @@ public class SerialComm {
     
     final static String LIST_CMD 	= "LIST /data/*";
     final static String STOR_CMD 	= "STOR /Users/mbrooks/Downloads/test10k.txt /data/test10k.txt";
+    final static String STOR_BT_CMD 	= "STOR \"/device/bt.key/ 22:DE:1A:B2:4A:CC 2D:DE:4B:47:D8:FC:C0:0A:52:A1:0C:FC:C9:12:A3:55\"";
     final static String RETR_CMD 	= "RETR /data/test10k.txt /Users/mbrooks/temp/test10k.txt";
+    final static String RETR_BT_CMD 	= "RETR \"/device/bt.key/ 22:DE:1A:B2:4A:CC\"";
     final static String MVFL_CMD 	= "RETR /data/test10k.txt /data/test10kb.txt";
     final static String GET_CMD		= "GET /Users/mbrooks/temp/test10k.txt";
     final static String DELE_CMD 	= "DELE /data/test10k.txt";
@@ -78,7 +81,6 @@ public class SerialComm {
     final static String RMD_CMD 	= "RMD /data/test_folder";
     final static String SFRT_CMD 	= "SFRT /data/test10k.txt";
     final static String SETTINGS_CMD = "RETR /device/firmware /Users/mbrooks/temp/settings.txt";
-    
     
     private ChannelManager channelMgr = null;
 
@@ -97,7 +99,7 @@ public class SerialComm {
 			//connect("/dev/cu.usbmodem14241");
 			
 			// Windows
-			connect("COM16");
+			connect(COM_PORT);
 		} catch (Exception e) {
 			e.printStackTrace();
 			exit();
@@ -124,17 +126,22 @@ public class SerialComm {
     	System.out.println("");
     	System.out.println("    LIST: Files and Directories");
     	System.out.println("    LIST /data/*");
+    	System.out.println("    LIST /device/bt.key");
     	System.out.println("");
     	System.out.println("    STOR: Copy files to card");
         System.out.println("    STOR " + APP_HOME + "/test_files/test10k.txt /data/test10k.txt");
         System.out.println("    STOR " + APP_HOME + "/test_files/test100k.txt /data/test100k.txt");
         System.out.println("    STOR " + APP_HOME + "/test_files/test500k.txt /data/test500k.txt");
+        System.out.println("    STOR \"/device/bt.key/ 00:55:ff:CC:ee:43 00:55:ff:CC:ee:43:00:55:ff:CC:ee:43:13:22:43:23\"");
         System.out.println("");
         System.out.println("    RETR: Download a file");
+        System.out.println("    RETR \"/device/bt.key/ 00:55:ff:CC:ee:43\"");
         System.out.println("    RETR /data/test10k.txt " + APP_HOME + "/test10k.txt");
         System.out.println("    GET " + APP_HOME + "/test10k.txt");
         System.out.println("");
         System.out.println("    DELE: Delete File");
+        System.out.println("    DELE \"/device/bt.key/ 00:55:ff:CC:ee:43\"");
+        System.out.println("    DELE \"/device/bt.key/ 00:00:00:00:00:00\" (delete all)");
         System.out.println("    DELE /data/test10k.txt");
         System.out.println("");
         System.out.println("    MKD: Make a directory");
@@ -240,7 +247,7 @@ public class SerialComm {
 			e.printStackTrace();
 		}    	
     }
-    
+
     @Command(description="Download a file.\n\n" + RETR_CMD, abbrev="")
     public void RETR(
     		@Param(name="Source", description="Local name of the file to upload, including the full path.") String source, 
@@ -250,6 +257,19 @@ public class SerialComm {
     		serialPort.writeBytes(packet.getBytes());
 			
     		readCommandChannel();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}    	
+    }
+    
+    @Command(description="Download a file.\n\n" + RETR_BT_CMD, abbrev="")
+    public void RETR(
+    		@Param(name="btfile mac", description="/device/bt.key/ 34:DE:1A:B2:4A:F2") String btkey) {	
+    	try {
+    		SerialPortPacket packet = new SerialPortPacket(sendCommand("RETR", btkey), COMMAND_CHANNEL);
+    		serialPort.writeBytes(packet.getBytes());
+			
+    		readBothChannels();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}    	
@@ -286,6 +306,20 @@ public class SerialComm {
 			double endTime   = System.currentTimeMillis();
 			
 			System.out.println("STOR time in seconds = " + (endTime - startTime)/1000);
+			
+			readBothChannels();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}    	
+    }
+    
+    @Command(description="Upload a BT KEY.\n\n" + STOR_BT_CMD, abbrev="")
+    public void STOR(
+    		@Param(name="btfile mac linkkey", description="/device/bt.key/ 34:DE:1A:B2:4A:F2 C6:41:31:CF:BD:1C:FC:A0:3F:26:8B:C1:03:EF:01:39") String btkey) {
+    	
+    	try {
+    		SerialPortPacket packet = new SerialPortPacket(sendCommand("STOR", btkey), COMMAND_CHANNEL);
+    		serialPort.writeBytes(packet.getBytes());
 			
 			readBothChannels();
 		} catch (Exception e) {
