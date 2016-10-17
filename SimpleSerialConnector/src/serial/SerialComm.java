@@ -60,6 +60,9 @@ public class SerialComm {
 	private SerialReader sr=null;
 	private Thread srThread=null;
 	
+	private static final String MAC_OS="mac";
+	private static final String WIN_OS="win";
+	
 	public static final int PACKET_SIZE = 512;
     
     public static final int COMMAND_CHANNEL = 1;
@@ -84,11 +87,14 @@ public class SerialComm {
     
     private ChannelManager channelMgr = null;
 
-	public SerialComm() {
+	public SerialComm(String os, String str) {
 		super();
 		try {
-			// Mac load jni library
-			//System.load("/home/mbrooks/development/projects/SimpleSerialConnector/lib/libjSSC-2.8_x86_64.jnilib");		
+			if (os.equals(MAC_OS)) {
+				// Mac load jni library
+				//System.load("/home/mbrooks/development/projects/SimpleSerialConnector/lib/libjSSC-2.8_x86_64.jnilib");		
+				System.load(SerialComm.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath() + "../lib/libjSSC-2.8_x86_64.jnilib");
+			}
 			
 			//cleanUpLockFiles();
 			
@@ -97,12 +103,12 @@ public class SerialComm {
 			//connect("/dev/cu.BLUSTOR-SerialPortServe");
 			//connect("/dev/cu.CYBERGATE-SerialPortSer");
 			//connect("/dev/cu.usbmodem14241");
+			//connect("/dev/cu.usbmodem14111");
 			
-			// Windows
-			connect(COM_PORT);
+			connect(str);
 		} catch (Exception e) {
 			e.printStackTrace();
-			exit();
+			exitApplication();
 		}
 	}
 
@@ -365,7 +371,15 @@ public class SerialComm {
     }    
 
 	public static void main(String[] args) {
-		SerialComm tw = new SerialComm();
+		
+		if (isValid(args) == false) {
+			System.out.println("You must pass in the name of the bluetooth connection");
+			System.exit(1);
+		}
+		String os = args[0];
+		String port = args[1];
+		
+		SerialComm tw = new SerialComm(os, port);
 		try {
 			tw.process();
 			
@@ -379,6 +393,33 @@ public class SerialComm {
 			}
 		}
 	}
+	
+	private static boolean isValid(String[] args) {
+		// must pass os and port
+		if (args.length != 2) {
+			System.out.println("Missing os and port arguments");
+			printUsage();
+			return false;
+		}
+		if (args[0].length() == 0 || args[1].length() == 0) {
+			return false;
+		}
+		return true;
+		
+	}
+	
+	private static void printUsage() {
+		System.out.println("Example:");
+		System.out.println("java serial.SerialComm mac /dev/cu.CYBERGATE-SerialPortSer");
+	}
+	
+	
+	private void listPorts() {
+        String[] portNames = SerialPortList.getPortNames();
+        for(int i = 0; i < portNames.length; i++){
+            System.out.println(portNames[i]);
+        }
+	}	
 	
     private void readBothChannels() {
         ExecutorService executor = Executors.newSingleThreadExecutor();
