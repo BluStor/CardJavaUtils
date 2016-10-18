@@ -75,6 +75,8 @@ public class SerialComm {
     private static final String APP_HOME = System.getProperty("user.dir");
     
     final static String LIST_CMD 	= "LIST /data/*";
+	final static String CWD_CMD 	= "CWD /apps/vault/data";
+    final static String PWD_CMD 	= "PWD /data/*";
     final static String STOR_CMD 	= "STOR /Users/mbrooks/Downloads/test10k.txt /data/test10k.txt";
     final static String STOR_BT_CMD 	= "STOR \"/device/bt.key/ 22:DE:1A:B2:4A:CC 2D:DE:4B:47:D8:FC:C0:0A:52:A1:0C:FC:C9:12:A3:55\"";
     final static String RETR_CMD 	= "RETR /data/test10k.txt /Users/mbrooks/temp/test10k.txt";
@@ -139,6 +141,9 @@ public class SerialComm {
     	System.out.println("    LIST /data/*");
     	System.out.println("    LIST /device/bt.key");
     	System.out.println("");
+    	System.out.println("    CWD: Set working directory");
+    	System.out.println("    CWD /data/test_folder");
+    	System.out.println("");
     	System.out.println("    STOR: Copy files to card");
         System.out.println("    STOR " + APP_HOME + "/test_files/test10k.txt /data/test10k.txt");
         System.out.println("    STOR " + APP_HOME + "/test_files/test100k.txt /data/test100k.txt");
@@ -189,6 +194,33 @@ public class SerialComm {
         //return "LIST sent";
     }
 
+    @Command(description="Path of current working directory.\n\n" + PWD_CMD, abbrev="")
+    public void PWD () {
+    	try {
+    		SerialPortPacket packet = new SerialPortPacket(sendCommand("PWD"), COMMAND_CHANNEL);
+    		serialPort.writeBytes(packet.getBytes());
+			
+			readBothChannels();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+        //return "LIST sent";
+    }
+    
+    @Command(description="Set working directory.\n\n" + CWD_CMD, abbrev="")
+    public void CWD ( 
+    		@Param(name="Path", description="Full path to directory.") String str) {
+    	try {
+    		SerialPortPacket packet = new SerialPortPacket(sendCommand("CWD", str), COMMAND_CHANNEL);
+    		serialPort.writeBytes(packet.getBytes());
+			
+			readBothChannels();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+        //return "LIST sent";
+    }    
+    
     @Command(description="Delete a file.  See RMD for folders. \n\n" + DELE_CMD, abbrev="")
     public void DELE(@Param(name="Path", description="Name of the file to delete including full path.") String str) {
     	try {
@@ -501,7 +533,7 @@ public class SerialComm {
 		// SerialPortPacket packet = new SerialPortPacket(sendCommand("LIST", "/*"), COMMAND_CHANNEL);
 		//  530 not logged
 		
-		// SerialPortPacket packet = new SerialPortPacket(sendCommand("LIST", "/data/*"), COMMAND_CHANNEL);
+		// SerialPortPacket packet = new SerialPortPacket(("LIST", "/data/*"), COMMAND_CHANNEL);
 		// 530 not logged
 		
 		// SerialPortPacket packet = new SerialPortPacket(sendCommand("LIST", "/auth/*"), COMMAND_CHANNEL);
@@ -570,7 +602,10 @@ public class SerialComm {
         String cmd = String.format("%s %s\r\n", method, argument);
         return cmd.getBytes(StandardCharsets.US_ASCII);
     }
-    
+    private byte[] sendCommand(String method) throws IOException {
+        String cmd = String.format("%s\r\n", method);
+        return cmd.getBytes(StandardCharsets.US_ASCII);
+    }    
     private byte[] hexStringToByteArray(String s) {
         int len = s.length();
         byte[] data = new byte[len / 2];
