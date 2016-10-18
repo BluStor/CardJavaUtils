@@ -28,6 +28,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.StringWriter;
+import java.net.URLClassLoader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
@@ -42,6 +43,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+
+import java.net.URL;
 
 import asg.cliche.Command;
 import asg.cliche.Param;
@@ -94,8 +97,10 @@ public class SerialComm {
 				// Mac load jni library
 				//System.load("/home/mbrooks/development/projects/SimpleSerialConnector/lib/libjSSC-2.8_x86_64.jnilib");		
 				System.load(SerialComm.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath() + "../lib/libjSSC-2.8_x86_64.jnilib");
+			} else {
+				//System.setProperty("java.library.path","../lib/libjSSC-2.8_x86_64.jnilib");
 			}
-			
+						
 			//cleanUpLockFiles();
 			
 			// Mac Bluetooth Files
@@ -395,9 +400,10 @@ public class SerialComm {
 	}
 	
 	private static boolean isValid(String[] args) {
+		
 		// must pass os and port
 		if (args.length != 2) {
-			System.out.println("Missing os and port arguments");
+			System.out.print("\nError, missing operating system type or com port arguments.\n\n");
 			printUsage();
 			return false;
 		}
@@ -405,12 +411,13 @@ public class SerialComm {
 			return false;
 		}
 		return true;
-		
 	}
 	
 	private static void printUsage() {
-		System.out.println("Example:");
-		System.out.println("java serial.SerialComm mac /dev/cu.CYBERGATE-SerialPortSer");
+		System.out.print("  Mac example:\n");
+		System.out.print("  java serial.SerialComm mac /dev/cu.CYBERGATE-SerialPortSer\n\n");
+		System.out.print("  Windows example:\n");
+		System.out.print("  java serial.SerialComm win COM5\n\n");
 	}
 	
 	
