@@ -30,7 +30,9 @@ crw-rw-rw-  1 root     wheel           31,   6 Oct 17 10:41 tty.CYBERGATE-Serial
 
 ## Command Line
 
-Here is an example of running on mac and windows.  Your parameters could be slightly different. 
+Here is an example of running on mac and windows using a terminal window.  Your parameters could be slightly different. 
+
+I normally run the application in Eclipse, if I want to step through the code.
 
 ```
 # mac
