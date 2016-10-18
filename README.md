@@ -1,5 +1,8 @@
-# CardJavaUtils
-Java application used for direct access to the card for executing FTPx REST service calls.
+# Card Java Utilities
+
+Java command line application used for direct access to the card for executing FTPx REST service calls.  To understand and explore the capabilities of the card API.
+
+The application uses [Java Simple Serial Connector](https://github.com/scream3r/java-simple-serial-connector) to connect to the card over Bluetooth using the SPP (Serial Port Profile).  They provide both native libraries for Windows and Mac OS X.
 
 # Running Examples
 - Clone git repository
