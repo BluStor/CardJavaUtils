@@ -51,7 +51,13 @@ import asg.cliche.Param;
 import asg.cliche.ShellFactory;
 
 public class SerialComm {
+	
+	boolean isSerialPortInitialized = false;
+	
 	final static String COM_PORT = "COM74";
+	
+	private static String PORT = null;
+	private static String OS = null;
 	
 	private BlockingQueue<Byte>[] mChannelBuffers = new LinkedBlockingQueue[MAX_CHANNEL_NUMBER + 1];
 	
@@ -92,10 +98,11 @@ public class SerialComm {
     
     private ChannelManager channelMgr = null;
 
-	public SerialComm(String os, String str) {
+	public SerialComm() {
 		super();
+		
 		try {
-			if (os.equals(MAC_OS)) {
+			if (OS.equals(MAC_OS)) {
 				// Mac load jni library
 				//System.load("/home/mbrooks/development/projects/SimpleSerialConnector/lib/libjSSC-2.8_x86_64.jnilib");		
 				System.load(SerialComm.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath() + "../lib/libjSSC-2.8_x86_64.jnilib");
@@ -112,7 +119,6 @@ public class SerialComm {
 			//connect("/dev/cu.usbmodem14241");
 			//connect("/dev/cu.usbmodem14111");
 			
-			connect(str);
 		} catch (Exception e) {
 			e.printStackTrace();
 			exitApplication();
@@ -122,16 +128,21 @@ public class SerialComm {
 	private void exitApplication() {
 		if (sr!=null) {
 			sr.terminate();
-		}
+		}		
+		disconnect();
+		System.out.println("Exiting application");
+		System.exit(0);
+	}
+
+	private void disconnect() {
 		try {
+			System.out.println("Disconnecting");
 			if (serialPort !=null && serialPort.isOpened()) {
 				serialPort.closePort();
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		System.out.println("Exiting application");
-		System.exit(0);
 	}
 	
     @Command // Help
@@ -184,10 +195,14 @@ public class SerialComm {
     public void LIST( 
     		@Param(name="Path", description="Full path to the folder you want to list the contents.") String str) {
     	try {
+			connect();
+			
     		SerialPortPacket packet = new SerialPortPacket(sendCommand("LIST", str), COMMAND_CHANNEL);
     		serialPort.writeBytes(packet.getBytes());
 			
 			readBothChannels();
+			
+			disconnect();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -197,10 +212,13 @@ public class SerialComm {
     @Command(description="Path of current working directory.\n\n" + PWD_CMD, abbrev="")
     public void PWD () {
     	try {
+    		connect();
+    		
     		SerialPortPacket packet = new SerialPortPacket(sendCommand("PWD"), COMMAND_CHANNEL);
     		serialPort.writeBytes(packet.getBytes());
 			
 			readBothChannels();
+			disconnect();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -211,10 +229,12 @@ public class SerialComm {
     public void CWD ( 
     		@Param(name="Path", description="Full path to directory.") String str) {
     	try {
+    		connect();
     		SerialPortPacket packet = new SerialPortPacket(sendCommand("CWD", str), COMMAND_CHANNEL);
     		serialPort.writeBytes(packet.getBytes());
 			
 			readBothChannels();
+			disconnect();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -224,10 +244,12 @@ public class SerialComm {
     @Command(description="Delete a file.  See RMD for folders. \n\n" + DELE_CMD, abbrev="")
     public void DELE(@Param(name="Path", description="Name of the file to delete including full path.") String str) {
     	try {
+    		connect();
     		SerialPortPacket packet = new SerialPortPacket(sendCommand("DELE", str), COMMAND_CHANNEL);
     		serialPort.writeBytes(packet.getBytes());
 			
 			readBothChannels();
+			disconnect();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -236,10 +258,12 @@ public class SerialComm {
     @Command(description="Special Files \n\n" + MLST_CMD, abbrev="")
     public void MLST(@Param(name="Path", description="Name of the file for special command.") String str) {
     	try {
+    		connect();
     		SerialPortPacket packet = new SerialPortPacket(sendCommand("MLST", str), COMMAND_CHANNEL);
     		serialPort.writeBytes(packet.getBytes());
 			
 			readBothChannels();
+			disconnect();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -250,10 +274,12 @@ public class SerialComm {
     @Command(description="Create a folder.\n\n" + MKD_CMD, abbrev="")
     public void MKD(@Param(name="Path", description="Name of the folder including the full path.") String str) {
     	try {
+    		connect();
     		SerialPortPacket packet = new SerialPortPacket(sendCommand("MKD", str), COMMAND_CHANNEL);
     		serialPort.writeBytes(packet.getBytes());
 			
 			readBothChannels();
+			disconnect();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -263,10 +289,12 @@ public class SerialComm {
     public void RMD(
     		@Param(name="Path", description="Name of the folder including the full path.") String str) {
     	try {
+    		connect();
     		SerialPortPacket packet = new SerialPortPacket(sendCommand("RMD", str), COMMAND_CHANNEL);
     		serialPort.writeBytes(packet.getBytes());
 			
 			readBothChannels();
+			disconnect();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -276,6 +304,7 @@ public class SerialComm {
     		@Param(name="Source", description="Remote name of the file to be changed.") String source, 
     		@Param(name="Target", description="New name for that file.") String target) {
     	try {
+    		connect();
     		SerialPortPacket packet = new SerialPortPacket(sendCommand("RNFR", source), COMMAND_CHANNEL);
     		serialPort.writeBytes(packet.getBytes());
 			
@@ -285,6 +314,7 @@ public class SerialComm {
     		serialPort.writeBytes(packet.getBytes());
 			
     		readCommandChannel();
+    		disconnect();
     		
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -296,10 +326,12 @@ public class SerialComm {
     		@Param(name="Source", description="Local name of the file to upload, including the full path.") String source, 
     		@Param(name="Target", description="Name of the file, including full path on the card.") String target) {
     	try {
+    		connect();
     		SerialPortPacket packet = new SerialPortPacket(sendCommand("RETR", source), COMMAND_CHANNEL);
     		serialPort.writeBytes(packet.getBytes());
 			
     		readCommandChannel();
+    		disconnect();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}    	
@@ -309,10 +341,12 @@ public class SerialComm {
     public void RETR(
     		@Param(name="btfile mac", description="/device/bt.key/ 34:DE:1A:B2:4A:F2") String btkey) {	
     	try {
+    		connect();
     		SerialPortPacket packet = new SerialPortPacket(sendCommand("RETR", btkey), COMMAND_CHANNEL);
     		serialPort.writeBytes(packet.getBytes());
 			
     		readBothChannels();
+    		disconnect();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}    	
@@ -321,9 +355,11 @@ public class SerialComm {
     @Command(description="Save the data channel sent from the card and write to a file.\n\n" + GET_CMD, abbrev="")
     public String GET( @Param(name="Path", description="Local name of the file to upload, including the full path.") String path) {
     	try {
+    		connect();
     		channelMgr.getFile(path);
     		
     		readBothChannels();
+    		disconnect();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -337,6 +373,7 @@ public class SerialComm {
     	
     	double startTime = System.currentTimeMillis();
     	try {
+    		connect();
     		SerialPortPacket packet = new SerialPortPacket(sendCommand("STOR", target), COMMAND_CHANNEL);
     		serialPort.writeBytes(packet.getBytes());
 			
@@ -351,6 +388,8 @@ public class SerialComm {
 			System.out.println("STOR time in seconds = " + (endTime - startTime)/1000);
 			
 			readBothChannels();
+			
+			disconnect();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}    	
@@ -361,10 +400,12 @@ public class SerialComm {
     		@Param(name="btfile mac linkkey", description="/device/bt.key/ 34:DE:1A:B2:4A:F2 C6:41:31:CF:BD:1C:FC:A0:3F:26:8B:C1:03:EF:01:39") String btkey) {
     	
     	try {
+    		connect();
     		SerialPortPacket packet = new SerialPortPacket(sendCommand("STOR", btkey), COMMAND_CHANNEL);
     		serialPort.writeBytes(packet.getBytes());
 			
 			readBothChannels();
+			disconnect();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}    	
@@ -377,9 +418,10 @@ public class SerialComm {
     		@Param(name="Path", description="Name of the folder including the full path.") String path) {
         String timestamp = new SimpleDateFormat("yyyyMMddhhmmss").format(new Date());
         try {
+        	connect();
         	SerialPortPacket packet = new SerialPortPacket(sendCommand("SRFT", timestamp + " " + path), COMMAND_CHANNEL);
         	serialPort.writeBytes(packet.getBytes());
-        	
+        	disconnect();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -413,10 +455,10 @@ public class SerialComm {
 			System.out.println("You must pass in the name of the bluetooth connection");
 			System.exit(1);
 		}
-		String os = args[0];
-		String port = args[1];
+		OS = args[0];
+		PORT = args[1];
 		
-		SerialComm tw = new SerialComm(os, port);
+		SerialComm tw = new SerialComm();
 		try {
 			tw.process();
 			
@@ -564,10 +606,12 @@ public class SerialComm {
 		}
 	}
 
-	void connect(String portName) throws Exception {
+	void connect() throws Exception {
 		System.out.println("Connecting...");
 		
-		serialPort = new SerialPort(portName);
+		if (serialPort == null) {
+			serialPort = new SerialPort(this.PORT);
+		}
 		
         if (serialPort.isOpened()) {
         	throw new Exception("Port already open");
@@ -575,25 +619,30 @@ public class SerialComm {
 				
         //Open port
         serialPort.openPort();
-                
-        //We expose the settings. You can also use this line - serialPort.setParams(9600, 8, 1, 0);
-        serialPort.setParams(SerialPort.BAUDRATE_115200, 
-                             SerialPort.DATABITS_8,
-                             SerialPort.STOPBITS_1,
-                             SerialPort.PARITY_NONE);
         
-        for (int i = 0; i <= MAX_CHANNEL_NUMBER; i++) {
-            mChannelBuffers[i] = new LinkedBlockingQueue<>();
+        if (isSerialPortInitialized == false) {
+	        //We expose the settings. You can also use this line - serialPort.setParams(9600, 8, 1, 0);
+	        serialPort.setParams(SerialPort.BAUDRATE_115200, 
+	                             SerialPort.DATABITS_8,
+	                             SerialPort.STOPBITS_1,
+	                             SerialPort.PARITY_NONE);
+	        
+	        for (int i = 0; i <= MAX_CHANNEL_NUMBER; i++) {
+	            mChannelBuffers[i] = new LinkedBlockingQueue<>();
+	        }
+	        
+	        channelMgr = new ChannelManager();
+	        channelMgr.setBlockingQue(mChannelBuffers);
+	        channelMgr.setIOStreams(serialPort);
+	        
+	        sr = new SerialReader(serialPort);
+	        sr.setBlockingQue(mChannelBuffers);
+	        srThread = new Thread(sr);
+	        srThread.start();
+	        
+	        isSerialPortInitialized = true;
+        
         }
-        
-        channelMgr = new ChannelManager();
-        channelMgr.setBlockingQue(mChannelBuffers);
-        channelMgr.setIOStreams(serialPort);
-        
-        sr = new SerialReader(serialPort);
-        sr.setBlockingQue(mChannelBuffers);
-        srThread = new Thread(sr);
-        srThread.start();
         		
 		System.out.println("Connecting finished");
 	}
