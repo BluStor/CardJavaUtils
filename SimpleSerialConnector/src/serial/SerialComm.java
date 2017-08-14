@@ -387,7 +387,7 @@ public class SerialComm {
 			
 			System.out.println("STOR time in seconds = " + (endTime - startTime)/1000);
 			
-			readBothChannels();
+			// readBothChannels();
 			
 			disconnect();
 		} catch (Exception e) {
@@ -421,6 +421,7 @@ public class SerialComm {
         	connect();
         	SerialPortPacket packet = new SerialPortPacket(sendCommand("SRFT", timestamp + " " + path), COMMAND_CHANNEL);
         	serialPort.writeBytes(packet.getBytes());
+        	readBothChannels();
         	disconnect();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -613,12 +614,13 @@ public class SerialComm {
 			serialPort = new SerialPort(this.PORT);
 		}
 		
-        if (serialPort.isOpened()) {
-        	throw new Exception("Port already open");
+        if (!serialPort.isOpened()) {
+            System.out.println("Open port");
+            serialPort.openPort();
+        } else {
+        	System.out.println("Port is already open");
         }
 				
-        //Open port
-        serialPort.openPort();
         
         if (isSerialPortInitialized == false) {
 	        //We expose the settings. You can also use this line - serialPort.setParams(9600, 8, 1, 0);
