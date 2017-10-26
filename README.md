@@ -48,8 +48,6 @@ Make sure you are running java 8.  I did not get it to work with Java 9.  Type "
 Under "Device Manager" expand "Ports (COM & LPT)".  You should see two serial bluetooth entires.  One is incoming and the other is outgoing.  You can try each one, if you are not sure.
 
 cd c:\<where you cloned>\CardJavaUtils\SimpleSerialConnector\bin
-
-java -classpath .;..\lib\asg.cliche-110413.jar;..\lib\jssc.jar serial.SerialComm win COM5
 "C:\Program Files (x86)\Java\jdk1.8.0_151\bin\java" -classpath .;..\lib\asg.cliche-110413.jar;..\lib\jssc.jar serial.SerialComm win COM99
 
 ```
